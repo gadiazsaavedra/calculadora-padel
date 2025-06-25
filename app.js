@@ -48,24 +48,18 @@ function startSession() {
 
 // Agregar jugadores iniciales
 function addInitialPlayers() {
-    const selectedPlayers = [
-        document.getElementById('initial-player-1').value,
-        document.getElementById('initial-player-2').value,
-        document.getElementById('initial-player-3').value,
-        document.getElementById('initial-player-4').value
-    ].filter(name => name);
+    const checkboxes = document.querySelectorAll('#initial-players input[type="checkbox"]:checked');
+    const selectedPlayers = Array.from(checkboxes).map(cb => cb.value);
     
-    // Verificar duplicados
-    const uniquePlayers = [...new Set(selectedPlayers)];
-    if (selectedPlayers.length !== uniquePlayers.length) {
-        alert('No puedes seleccionar el mismo jugador más de una vez');
+    if (selectedPlayers.length === 0) {
+        alert('Selecciona al menos un jugador');
         return;
     }
     
-    const players = uniquePlayers.filter(name => !sessionData.players.find(p => p.name === name));
+    const players = selectedPlayers.filter(name => !sessionData.players.find(p => p.name === name));
     
     if (players.length === 0) {
-        alert('Selecciona al menos un jugador');
+        alert('Los jugadores seleccionados ya están en la sesión');
         return;
     }
     
@@ -83,10 +77,7 @@ function addInitialPlayers() {
     });
     
     // Limpiar selecciones
-    document.getElementById('initial-player-1').value = '';
-    document.getElementById('initial-player-2').value = '';
-    document.getElementById('initial-player-3').value = '';
-    document.getElementById('initial-player-4').value = '';
+    document.querySelectorAll('#initial-players input[type="checkbox"]').forEach(cb => cb.checked = false);
     
     // Mostrar secciones restantes
     document.getElementById('initial-players').classList.add('hidden');
@@ -512,9 +503,6 @@ function resetApp() {
         updateProgress(1, 'Configurar sesión');
         
         // Limpiar selecciones iniciales
-        document.getElementById('initial-player-1').value = '';
-        document.getElementById('initial-player-2').value = '';
-        document.getElementById('initial-player-3').value = '';
-        document.getElementById('initial-player-4').value = '';
+        document.querySelectorAll('#initial-players input[type="checkbox"]').forEach(cb => cb.checked = false);
     }
 }
