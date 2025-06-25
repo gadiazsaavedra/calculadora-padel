@@ -161,6 +161,11 @@ function updateProgress(step, description) {
     progressFill.style.width = `${(step / 4) * 100}%`;
 }
 
+// Formatear números con separador de miles
+function formatCurrency(amount) {
+    return amount.toLocaleString('es-AR');
+}
+
 // Marcar que todos los jugadores se quedan hasta el final
 function allPlayersStay() {
     let activePlayersCount = 0;
@@ -376,7 +381,7 @@ function showResults() {
     
     // Mostrar resultados
     document.getElementById('results').classList.remove('hidden');
-    document.getElementById('total-display').textContent = `Costo Total: $${sessionData.totalCost}`;
+    document.getElementById('total-display').textContent = `Costo Total: $${formatCurrency(sessionData.totalCost)}`;
     
     updateProgress(4, 'Resultados finales');
     
@@ -402,7 +407,7 @@ function showResults() {
                         (${(player.proportion * 100).toFixed(1)}%)
                     </div>
                 </div>
-                <div class="player-cost">$${player.cost}</div>
+                <div class="player-cost">$${formatCurrency(player.cost)}</div>
                 <button class="btn-small ${player.paid ? 'btn-danger' : 'btn-secondary'}" 
                         onclick="togglePayment(${player.id})">
                     ${player.paid ? '❌ Marcar Impago' : '✅ Marcar Pagado'}
@@ -417,15 +422,15 @@ function showResults() {
             </div>
             <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                 <span><strong>Total Calculado:</strong></span>
-                <span style="color: #333;"><strong>$${totalCalculated}</strong></span>
+                <span style="color: #333;"><strong>$${formatCurrency(totalCalculated)}</strong></span>
             </div>
             <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                 <span><strong>Total Recaudado:</strong></span>
-                <span style="color: #4CAF50;"><strong>$${totalPaid}</strong></span>
+                <span style="color: #4CAF50;"><strong>$${formatCurrency(totalPaid)}</strong></span>
             </div>
             <div style="display: flex; justify-content: space-between;">
                 <span><strong>Saldo:</strong></span>
-                <span style="color: ${totalCalculated - sessionData.totalCost >= 0 ? '#4CAF50' : '#f44336'};"><strong>${totalCalculated - sessionData.totalCost >= 0 ? '+' : ''}$${totalCalculated - sessionData.totalCost}</strong></span>
+                <span style="color: ${totalCalculated - sessionData.totalCost >= 0 ? '#4CAF50' : '#f44336'};"><strong>${totalCalculated - sessionData.totalCost >= 0 ? '+' : ''}$${formatCurrency(Math.abs(totalCalculated - sessionData.totalCost))}</strong></span>
             </div>
         </div>
     `;
@@ -448,20 +453,20 @@ function shareResults() {
     const saldo = totalCalculated - sessionData.totalCost;
     
     let message = `🎾 RESULTADOS PÁDEL - ${today}\n\n`;
-    message += `💰 Costo total: $${sessionData.totalCost}\n`;
+    message += `💰 Costo total: $${formatCurrency(sessionData.totalCost)}\n`;
     message += `⏰ Sesión: ${sessionData.startTime} - ${sessionData.endTime}\n\n`;
     message += `👥 PAGOS POR JUGADOR:\n`;
     
     sessionData.players.forEach(player => {
         const status = player.paid ? '✅ Pagado' : '⏳ Pendiente';
         const hours = (player.effectiveMinutes / 60).toFixed(1);
-        message += `• ${player.name}: $${player.cost} (${hours}h) ${status}\n`;
+        message += `• ${player.name}: $${formatCurrency(player.cost)} (${hours}h) ${status}\n`;
     });
     
     message += `\n📄 RESUMEN:\n`;
-    message += `Recaudado: $${totalPaid}\n`;
-    message += `Pendiente: $${totalCalculated - totalPaid}\n`;
-    message += `Saldo: ${saldo >= 0 ? '+' : ''}$${saldo}`;
+    message += `Recaudado: $${formatCurrency(totalPaid)}\n`;
+    message += `Pendiente: $${formatCurrency(totalCalculated - totalPaid)}\n`;
+    message += `Saldo: ${saldo >= 0 ? '+' : ''}$${formatCurrency(Math.abs(saldo))}`;
     
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
