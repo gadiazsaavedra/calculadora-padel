@@ -189,9 +189,20 @@ function allPlayersStay() {
 // Marcar salida de jugador
 function markPlayerDeparture(playerId) {
     const currentTime = new Date().toTimeString().slice(0, 5);
-    let departureTime = prompt('Hora de salida (ej: 20:30 o 8:30 PM):', currentTime);
+    let departureTime = prompt('Hora de salida (ej: 2030, 830PM o 20:30):', currentTime.replace(':', ''));
     
     if (!departureTime) return;
+    
+    // Auto-formatear hora si no tiene dos puntos
+    departureTime = departureTime.trim();
+    if (!departureTime.includes(':') && !departureTime.toLowerCase().includes('am') && !departureTime.toLowerCase().includes('pm')) {
+        // Formato HHMM -> HH:MM
+        if (departureTime.length === 3) {
+            departureTime = departureTime.charAt(0) + ':' + departureTime.slice(1);
+        } else if (departureTime.length === 4) {
+            departureTime = departureTime.slice(0, 2) + ':' + departureTime.slice(2);
+        }
+    }
     
     // Validar formato de hora
     try {
