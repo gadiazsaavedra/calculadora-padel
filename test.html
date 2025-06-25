@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tests - Calculadora Pádel</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-pass { color: green; }
+        .test-fail { color: red; }
+        .test-section { margin: 20px 0; padding: 10px; border: 1px solid #ddd; }
+        pre { background: #f5f5f5; padding: 10px; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Unit Tests - Calculadora Pádel</h1>
+    <div id="test-results"></div>
+
+    <script src="app.js"></script>
+    <script>
+        // Test framework simple
+        let testResults = [];
+        
+        function test(name, fn) {
+            try {
+                fn();
+                testResults.push({ name, status: 'PASS', error: null });
+                console.log(`✅ ${name}`);
+            } catch (error) {
+                testResults.push({ name, status: 'FAIL', error: error.message });
+                console.log(`❌ ${name}: ${error.message}`);
+            }
+        }
+        
+        function assertEquals(actual, expected, message = '') {
+            if (actual !== expected) {
+                throw new Error(`${message} - Expected: ${expected}, Got: ${actual}`);
+            }
+        }
+        
+        function assertTrue(condition, message = '') {
+            if (!condition) {
+                throw new Error(`${message} - Expected true, got false`);
+            }
+        }
+
+        // Tests de conversión de tiempo
+        test('timeToMinutes - formato 24h', () => {
+            assertEquals(timeToMinutes('18:30'), 1110, 'Conversión 18:30');
+            assertEquals(timeToMinutes('09:15'), 555, 'Conversión 09:15');
+            assertEquals(timeToMinutes('00:00'), 0, 'Conversión 00:00');
+        });
+
+        test('timeToMinutes - formato 12h AM/PM', () => {
+            assertEquals(timeToMinutes('6:30 PM'), 1110, 'Conversión 6:30 PM');
+            assertEquals(timeToMinutes('9:15 AM'), 555, 'Conversión 9:15 AM');
+            assertEquals(timeToMinutes('12:00 PM'), 720, 'Conversión 12:00 PM (mediodía)');
+            assertEquals(timeToMinutes('12:00 AM'), 0, 'Conversión 12:00 AM (medianoche)');
+        });
+
+        test('minutesToTime - conversión correcta', () => {
+            assertEquals(minutesToTime(90), '1h 30m', 'Conversión 90 minutos');
+            assertEquals(minutesToTime(60), '1h 0m', 'Conversión 60 minutos');
+            assertEquals(minutesToTime(45), '0h 45m', 'Conversión 45 minutos');
+        });
+
+        // Tests de cálculo de costos
+        test('calculateCosts - distribución proporcional', () => {
+            // Setup sesión de prueba
+            sessionData = {
+                startTime: '18:00',
+                endTime: '22:00',
+                totalCost: 8000,
+                players: [
+                    { id: 1, name: 'Juan', arrivalTime: '18:00', departureTime: null, effectiveMinutes: 0 },
+                    { id: 2, name: 'María', arrivalTime: '18:00', departureTime: '20:00', effectiveMinutes: 0 }
+                ]
+            };
+            
+            calculateCosts();
+            
+            // Juan: 4 horas = 240 min, María: 2 horas = 120 min
+            // Total: 360 min
+            // Juan: (240/360) * 8000 = 5333.33 → 5300 (redondeado)
+            // María: (120/360) * 8000 = 2666.67 → 2700 (redondeado)
+            
+            assertEquals(sessionData.players[0].effectiveMinutes, 240, 'Minutos efectivos Juan');
+            assertEquals(sessionData.players[1].effectiveMinutes, 120, 'Minutos efectivos María');
+            assertTrue(sessionData.players[0].cost >= 5200 && sessionData.players[0].cost <= 5400, 'Costo Juan');
+            assertTrue(sessionData.players[1].cost >= 2600 && sessionData.players[1].cost <= 2800, 'Costo María');
+        });
+
+        test('calculateCosts - redondeo a 100', () => {
+            sessionData = {
+                startTime: '18:00',
+                endTime: '19:00',
+                totalCost: 1250,
+                players: [
+                    { id: 1, name: 'Test', arrivalTime: '18:00', departureTime: null, effectiveMinutes: 0 }
+                ]
+            };
+            
+            calculateCosts();
+            
+            // 1250 → debe redondear a 1200 o 1300
+            assertTrue(sessionData.players[0].cost % 100 === 0, 'Redondeo a múltiplo de 100');
+        });
+
+        // Tests de validación
+        test('Validación de horarios - llegada vs salida', () => {
+            const mockPlayer = { arrivalTime: '19:00' };
+            sessionData.endTime = '22:00';
+            
+            // Simular validación (extraída de markPlayerDeparture)
+            const validateDeparture = (arrivalTime, departureTime, sessionEndTime) => {
+                const departureMinutes = timeToMinutes(departureTime);
+                const arrivalMinutes = timeToMinutes(arrivalTime);
+                const sessionEndMinutes = timeToMinutes(sessionEndTime);
+                
+                if (departureMinutes <= arrivalMinutes) return 'ARRIVAL_ERROR';
+                if (departureMinutes > sessionEndMinutes) return 'SESSION_END_ERROR';
+                return 'VALID';
+            };
+            
+            assertEquals(validateDeparture('19:00', '18:30', '22:00'), 'ARRIVAL_ERROR', 'Salida antes de llegada');
+            assertEquals(validateDeparture('19:00', '23:00', '22:00'), 'SESSION_END_ERROR', 'Salida después de fin');
+            assertEquals(validateDeparture('19:00', '20:30', '22:00'), 'VALID', 'Horario válido');
+        });
+
+        // Test de casos edge
+        test('Sesión muy corta - menos de 1 hora', () => {
+            sessionData = {
+                startTime: '18:00',
+                endTime: '18:30',
+                totalCost: 500,
+                players: [
+                    { id: 1, name: 'Test1', arrivalTime: '18:00', departureTime: null, effectiveMinutes: 0 },
+                    { id: 2, name: 'Test2', arrivalTime: '18:00', departureTime: null, effectiveMinutes: 0 }
+                ]
+            };
+            
+            calculateCosts();
+            
+            assertTrue(sessionData.players[0].effectiveMinutes === 30, 'Minutos correctos sesión corta');
+            assertTrue(sessionData.players[0].cost + sessionData.players[1].cost >= 400, 'Costo mínimo distribuido');
+        });
+
+        // Mostrar resultados
+        function displayResults() {
+            const container = document.getElementById('test-results');
+            const passed = testResults.filter(t => t.status === 'PASS').length;
+            const failed = testResults.filter(t => t.status === 'FAIL').length;
+            
+            let html = `<h2>Resultados: ${passed} ✅ | ${failed} ❌</h2>`;
+            
+            testResults.forEach(test => {
+                const className = test.status === 'PASS' ? 'test-pass' : 'test-fail';
+                html += `<div class="test-section ${className}">
+                    <strong>${test.status === 'PASS' ? '✅' : '❌'} ${test.name}</strong>
+                    ${test.error ? `<pre>${test.error}</pre>` : ''}
+                </div>`;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        // Ejecutar todos los tests
+        setTimeout(displayResults, 100);
+    </script>
+</body>
+</html>

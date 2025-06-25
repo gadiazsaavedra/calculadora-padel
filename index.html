@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora Pádel</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2196F3">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎾</text></svg>">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 10px;
+        }
+        
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        
+        @media screen and (min-width: 768px) {
+            .container {
+                max-width: 600px;
+            }
+        }
+        
+        .header {
+            background: #2196F3;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .content {
+            padding: 20px;
+        }
+        
+        .section {
+            margin-bottom: 25px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.5s ease forwards;
+        }
+        
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        
+        .input-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #555;
+        }
+        
+        input, select, button {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 18px;
+            min-height: 50px;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: #2196F3;
+        }
+        
+        button {
+            background: #2196F3;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #1976D2;
+        }
+        
+        .btn-secondary {
+            background: #4CAF50;
+        }
+        
+        .btn-secondary:hover {
+            background: #45a049;
+        }
+        
+        .btn-danger {
+            background: #f44336;
+        }
+        
+        .btn-danger:hover {
+            background: #da190b;
+        }
+        
+        .player-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: white;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 4px solid #2196F3;
+            transition: all 0.3s ease;
+        }
+        
+        .player-color-0 { border-left-color: #2196F3; }
+        .player-color-1 { border-left-color: #4CAF50; }
+        .player-color-2 { border-left-color: #FF9800; }
+        .player-color-3 { border-left-color: #9C27B0; }
+        .player-color-4 { border-left-color: #F44336; }
+        .player-color-5 { border-left-color: #00BCD4; }
+        .player-color-6 { border-left-color: #795548; }
+        .player-color-7 { border-left-color: #607D8B; }
+        
+        .player-info {
+            flex: 1;
+        }
+        
+        .player-name {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .player-time {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .player-cost {
+            font-weight: 600;
+            color: #2196F3;
+            font-size: 18px;
+        }
+        
+        .btn-small {
+            padding: 10px 15px;
+            font-size: 16px;
+            margin-left: 5px;
+            min-height: 44px;
+        }
+        
+        .results {
+            background: #e8f5e8;
+            border-left: 4px solid #4CAF50;
+        }
+        
+        .total-cost {
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #2196F3;
+            margin-bottom: 20px;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .status-active {
+            border-left-color: #4CAF50;
+        }
+        
+        .status-left {
+            border-left-color: #ff9800;
+            opacity: 0.7;
+        }
+        
+        .payment-status {
+            font-size: 12px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 10px;
+        }
+        
+        .paid {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .pending {
+            background: #ff9800;
+            color: white;
+        }
+        
+        .progress-bar {
+            background: #f0f0f0;
+            height: 6px;
+            border-radius: 3px;
+            margin: 15px 20px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            background: #2196F3;
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+        
+        .step-indicator {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+        
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #4CAF50;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        /* Modo landscape */
+        @media screen and (orientation: landscape) and (max-height: 600px) {
+            .container {
+                max-width: 90%;
+                margin: 5px auto;
+            }
+            
+            .header {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 20px;
+                margin-bottom: 5px;
+            }
+            
+            .header p {
+                font-size: 14px;
+                margin-bottom: 5px;
+            }
+            
+            .content {
+                padding: 15px;
+            }
+            
+            .section {
+                margin-bottom: 15px;
+                padding: 10px;
+            }
+            
+            .section h3 {
+                font-size: 16px;
+                margin-bottom: 10px;
+            }
+            
+            .input-group {
+                margin-bottom: 10px;
+            }
+            
+            input, select, button {
+                padding: 10px;
+                font-size: 16px;
+                min-height: 40px;
+            }
+            
+            .btn-small {
+                padding: 8px 12px;
+                font-size: 14px;
+                min-height: 36px;
+            }
+            
+            .player-item {
+                padding: 8px;
+                margin-bottom: 8px;
+            }
+            
+            .step-indicator {
+                font-size: 12px;
+                margin: 5px 0;
+            }
+            
+            .progress-bar {
+                margin: 10px 20px;
+                height: 4px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎾 Calculadora Pádel</h1>
+            <p>Costos Compartidos Justos</p>
+            <div class="step-indicator" id="step-indicator">Paso 1 de 4</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill" style="width: 25%;"></div>
+            </div>
+        </div>
+        
+        <div class="content">
+            <!-- Configuración de Sesión -->
+            <div class="section" id="session-setup">
+                <h3>📋 Nueva Sesión</h3>
+                <div class="input-group">
+                    <label>Hora de Inicio</label>
+                    <input type="time" id="start-time" required>
+                </div>
+                <button onclick="startSession()">▶️ Iniciar Sesión</button>
+            </div>
+            
+            <!-- Jugadores Iniciales -->
+            <div class="section hidden" id="initial-players">
+                <h3>🏁 Jugadores Iniciales (desde el inicio)</h3>
+                <div class="input-group">
+                    <label>Seleccionar los 4 jugadores que empiezan:</label>
+                    <select id="initial-player-1">
+                        <option value="">Jugador 1...</option>
+                        <option value="Ariel">Ariel</option>
+                        <option value="Claudio">Claudio</option>
+                        <option value="Dario">Dario</option>
+                        <option value="Federico">Federico</option>
+                        <option value="Gustavo">Gustavo</option>
+                        <option value="Hugo">Hugo</option>
+                        <option value="Mariano">Mariano</option>
+                        <option value="Yel">Yel</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <select id="initial-player-2">
+                        <option value="">Jugador 2...</option>
+                        <option value="Ariel">Ariel</option>
+                        <option value="Claudio">Claudio</option>
+                        <option value="Dario">Dario</option>
+                        <option value="Federico">Federico</option>
+                        <option value="Gustavo">Gustavo</option>
+                        <option value="Hugo">Hugo</option>
+                        <option value="Mariano">Mariano</option>
+                        <option value="Yel">Yel</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <select id="initial-player-3">
+                        <option value="">Jugador 3...</option>
+                        <option value="Ariel">Ariel</option>
+                        <option value="Claudio">Claudio</option>
+                        <option value="Dario">Dario</option>
+                        <option value="Federico">Federico</option>
+                        <option value="Gustavo">Gustavo</option>
+                        <option value="Hugo">Hugo</option>
+                        <option value="Mariano">Mariano</option>
+                        <option value="Yel">Yel</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <select id="initial-player-4">
+                        <option value="">Jugador 4...</option>
+                        <option value="Ariel">Ariel</option>
+                        <option value="Claudio">Claudio</option>
+                        <option value="Dario">Dario</option>
+                        <option value="Federico">Federico</option>
+                        <option value="Gustavo">Gustavo</option>
+                        <option value="Hugo">Hugo</option>
+                        <option value="Mariano">Mariano</option>
+                        <option value="Yel">Yel</option>
+                    </select>
+                </div>
+                <button onclick="addInitialPlayers()" class="btn-secondary">👥 Agregar Jugadores Iniciales</button>
+            </div>
+            
+            <!-- Gestión de Jugadores -->
+            <div class="section hidden" id="player-management">
+                <h3>👥 Agregar Jugador</h3>
+                <div class="input-group">
+                    <label>Nombre del Jugador</label>
+                    <select id="player-name">
+                        <option value="">Seleccionar jugador...</option>
+                        <option value="Ariel">Ariel</option>
+                        <option value="Claudio">Claudio</option>
+                        <option value="Dario">Dario</option>
+                        <option value="Federico">Federico</option>
+                        <option value="Gustavo">Gustavo</option>
+                        <option value="Hugo">Hugo</option>
+                        <option value="Mariano">Mariano</option>
+                        <option value="Yel">Yel</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Hora de Llegada</label>
+                    <input type="time" id="arrival-time">
+                </div>
+                <button onclick="addPlayer()" class="btn-secondary">➕ Agregar Jugador</button>
+            </div>
+            
+            <!-- Lista de Jugadores Activos -->
+            <div class="section hidden" id="active-players">
+                <h3>🏃‍♂️ Jugadores en Sesión</h3>
+                <div id="players-list"></div>
+            </div>
+            
+            <!-- Finalizar Sesión -->
+            <div class="section hidden" id="session-end">
+                <h3>🏁 Finalizar Sesión</h3>
+                <button onclick="allPlayersStay()" class="btn-secondary" style="margin-bottom: 15px;">👥 Todos se Quedan Hasta el Final</button>
+                <div class="input-group">
+                    <label>Hora de Fin</label>
+                    <input type="time" id="end-time">
+                </div>
+                <div class="input-group">
+                    <label>Costo Total de la Cancha ($)</label>
+                    <input type="number" id="total-cost" placeholder="Ej: 8000" required>
+                </div>
+                <button onclick="endSession()" class="btn-danger">🏁 Finalizar y Calcular</button>
+            </div>
+            
+            <!-- Resultados -->
+            <div class="section results hidden" id="results">
+                <h3>💰 Resultados del Cálculo</h3>
+                <div class="total-cost" id="total-display"></div>
+                <div id="results-list"></div>
+                <button onclick="shareResults()" style="margin-top: 20px; margin-right: 10px;" class="btn-secondary">📱 Compartir por WhatsApp</button>
+                <button onclick="resetApp()" style="margin-top: 20px;">Nueva Sesión</button>
+            </div>
+        </div>
+        
+        <div style="text-align: center; padding: 20px; color: #666; font-size: 14px; border-top: 1px solid #eee; margin-top: 20px;">
+            Creado por Gustavo - Porque el pádel une, pero los gastos dividen.
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
