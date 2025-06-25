@@ -429,7 +429,7 @@ function showResults() {
         <div style="margin-top: 20px; padding: 15px; background: #f0f0f0; border-radius: 8px;">
             <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                 <span><strong>Total a Cobrar:</strong></span>
-                <span style="color: #2196F3;"><strong>$${sessionData.totalCost}</strong></span>
+                <span style="color: #2196F3;"><strong>$${formatCurrency(sessionData.totalCost)}</strong></span>
             </div>
             <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                 <span><strong>Total Calculado:</strong></span>
