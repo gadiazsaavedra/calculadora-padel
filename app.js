@@ -414,7 +414,7 @@ function showResults() {
                         </span>
                     </div>
                     <div class="player-time">
-                        Tiempo: ${minutesToTime(player.effectiveMinutes)} 
+                        T: ${minutesToTime(player.effectiveMinutes)}<br>
                         (${(player.proportion * 100).toFixed(1)}%)
                     </div>
                 </div>
