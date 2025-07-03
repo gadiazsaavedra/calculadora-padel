@@ -121,19 +121,19 @@ function addPlayer() {
     }
     
     if (!name || !arrivalTime) {
-        alert('Por favor completa el nombre y la hora de llegada');
+        showAlert('Campo requerido', 'Por favor completa el nombre y la hora de llegada');
         return;
     }
     
     // Verificar que no exista el jugador
     if (sessionData.players.find(p => p.name === name)) {
-        alert('Este jugador ya está en la sesión');
+        showAlert('Jugador duplicado', 'Este jugador ya está en la sesión');
         return;
     }
     
     // Validar que llegada no sea antes del inicio de sesión
     if (timeToMinutes(arrivalTime) < timeToMinutes(sessionData.startTime)) {
-        alert('La hora de llegada no puede ser anterior al inicio de la sesión');
+        showAlert('Hora inválida', 'La hora de llegada no puede ser anterior al inicio de la sesión');
         return;
     }
     
@@ -257,6 +257,80 @@ document.addEventListener('DOMContentLoaded', () => {
     initSwipeGestures();
 });
 
+// Sistema de modales nativos
+function showAlert(title, message) {
+    return new Promise((resolve) => {
+        const overlay = document.getElementById('modal-overlay');
+        const titleEl = document.getElementById('modal-title');
+        const messageEl = document.getElementById('modal-message');
+        const inputEl = document.getElementById('modal-input');
+        const buttonsEl = document.getElementById('modal-buttons');
+        
+        titleEl.textContent = title;
+        messageEl.textContent = message;
+        inputEl.classList.add('hidden');
+        
+        buttonsEl.innerHTML = `
+            <button class="modal-button primary" onclick="closeModal(); window.modalResolve();">OK</button>
+        `;
+        
+        overlay.classList.add('show');
+        window.modalResolve = resolve;
+    });
+}
+
+function showConfirm(title, message) {
+    return new Promise((resolve) => {
+        const overlay = document.getElementById('modal-overlay');
+        const titleEl = document.getElementById('modal-title');
+        const messageEl = document.getElementById('modal-message');
+        const inputEl = document.getElementById('modal-input');
+        const buttonsEl = document.getElementById('modal-buttons');
+        
+        titleEl.textContent = title;
+        messageEl.textContent = message;
+        inputEl.classList.add('hidden');
+        
+        buttonsEl.innerHTML = `
+            <button class="modal-button secondary" onclick="closeModal(); window.modalResolve(false);">Cancelar</button>
+            <button class="modal-button primary" onclick="closeModal(); window.modalResolve(true);">OK</button>
+        `;
+        
+        overlay.classList.add('show');
+        window.modalResolve = resolve;
+    });
+}
+
+function showPrompt(title, message, placeholder = '', defaultValue = '') {
+    return new Promise((resolve) => {
+        const overlay = document.getElementById('modal-overlay');
+        const titleEl = document.getElementById('modal-title');
+        const messageEl = document.getElementById('modal-message');
+        const inputEl = document.getElementById('modal-input');
+        const buttonsEl = document.getElementById('modal-buttons');
+        
+        titleEl.textContent = title;
+        messageEl.textContent = message;
+        inputEl.classList.remove('hidden');
+        inputEl.placeholder = placeholder;
+        inputEl.value = defaultValue;
+        
+        buttonsEl.innerHTML = `
+            <button class="modal-button secondary" onclick="closeModal(); window.modalResolve(null);">Cancelar</button>
+            <button class="modal-button primary" onclick="closeModal(); window.modalResolve(document.getElementById('modal-input').value);">OK</button>
+        `;
+        
+        overlay.classList.add('show');
+        setTimeout(() => inputEl.focus(), 300);
+        window.modalResolve = resolve;
+    });
+}
+
+function closeModal() {
+    const overlay = document.getElementById('modal-overlay');
+    overlay.classList.remove('show');
+}
+
 // Actualizar bottom navigation
 function updateBottomNav(currentStep) {
     // Remover active de todos
@@ -351,9 +425,9 @@ function allPlayersStay() {
 
 
 // Marcar salida de jugador
-function markPlayerDeparture(playerId) {
+async function markPlayerDeparture(playerId) {
     const currentTime = new Date().toTimeString().slice(0, 5);
-    let departureTime = prompt('Hora de salida (ej: 2030, 830PM o 20:30):', currentTime.replace(':', ''));
+    const departureTime = await showPrompt('Hora de salida', 'Ingresa la hora de salida:', 'ej: 2030, 830PM o 20:30', currentTime.replace(':', ''));
     
     if (!departureTime) return;
     
@@ -380,7 +454,7 @@ function markPlayerDeparture(playerId) {
             const arrivalMinutes = timeToMinutes(player.arrivalTime);
             
             if (departureMinutes <= arrivalMinutes) {
-                alert('La hora de salida debe ser posterior a la hora de llegada');
+                showAlert('Hora inválida', 'La hora de salida debe ser posterior a la hora de llegada');
                 return;
             }
             
@@ -388,7 +462,7 @@ function markPlayerDeparture(playerId) {
             if (sessionData.endTime) {
                 const sessionEndMinutes = timeToMinutes(sessionData.endTime);
                 if (departureMinutes > sessionEndMinutes) {
-                    alert('La hora de salida no puede ser posterior al fin de la sesión');
+                    showAlert('Hora inválida', 'La hora de salida no puede ser posterior al fin de la sesión');
                     return;
                 }
             }
@@ -398,14 +472,15 @@ function markPlayerDeparture(playerId) {
             updatePlayersDisplay();
         }
     } catch (error) {
-        alert('Formato de hora inválido. Usa formato 24h (ej: 20:30) o 12h (ej: 8:30 PM)');
+        showAlert('Formato inválido', 'Usa formato 24h (ej: 20:30) o 12h (ej: 8:30 PM)');
         return;
     }
 }
 
 // Eliminar jugador
-function removePlayer(playerId) {
-    if (confirm('¿Eliminar este jugador de la sesión?')) {
+async function removePlayer(playerId) {
+    const confirmed = await showConfirm('Eliminar jugador', '¿Eliminar este jugador de la sesión?');
+    if (confirmed) {
         sessionData.players = sessionData.players.filter(p => p.id !== playerId);
         updatePlayersDisplay();
     }
@@ -465,7 +540,7 @@ function endSession() {
     
     if (activePlayers.length >= 3 && activePlayers.length === totalPlayers && totalPlayers > 4) {
         const playerNames = activePlayers.map(p => p.name).join(', ');
-        const confirmed = confirm(`⚠️ ADVERTENCIA: Todos los jugadores (${activePlayers.length}) aparecen como activos hasta el final:\n\n${playerNames}\n\n¿Estás seguro de que NADIE se fue antes del final?\n\nPresiona OK para continuar o Cancelar para revisar.`);
+        const confirmed = await showConfirm('Advertencia', `Todos los jugadores (${activePlayers.length}) aparecen como activos hasta el final:\n\n${playerNames}\n\n¿Estás seguro de que NADIE se fue antes del final?`);
         
         if (!confirmed) {
             return;
@@ -649,8 +724,9 @@ function shareResults() {
 }
 
 // Reiniciar aplicación
-function resetApp() {
-    if (confirm('¿Iniciar una nueva sesión? Se perderán los datos actuales.')) {
+async function resetApp() {
+    const confirmed = await showConfirm('Nueva sesión', '¿Iniciar una nueva sesión? Se perderán los datos actuales.');
+    if (confirmed) {
         sessionData = {
             startTime: null,
             endTime: null,
