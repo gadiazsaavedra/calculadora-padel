@@ -87,15 +87,41 @@ function addInitialPlayers() {
     updateProgress(3, 'Gestionar sesión');
     showToast(`${players.length} jugador${players.length > 1 ? 'es' : ''} inicial${players.length > 1 ? 'es' : ''} agregado${players.length > 1 ? 's' : ''}`);
     updatePlayersDisplay();
+    setTimeout(initSwipeGestures, 100);
+}
+
+// Mostrar/ocultar campo de nombre personalizado
+function toggleCustomName() {
+    const select = document.getElementById('player-name');
+    const customGroup = document.getElementById('custom-name-group');
+    
+    if (select.value === 'custom') {
+        customGroup.classList.remove('hidden');
+    } else {
+        customGroup.classList.add('hidden');
+        document.getElementById('custom-player-name').value = '';
+    }
 }
 
 // Agregar jugador
 function addPlayer() {
-    const name = document.getElementById('player-name').value;
+    const selectValue = document.getElementById('player-name').value;
+    const customName = document.getElementById('custom-player-name').value.trim();
     const arrivalTime = document.getElementById('arrival-time').value;
     
+    let name = '';
+    if (selectValue === 'custom') {
+        if (!customName) {
+            alert('Por favor ingresa el nombre del jugador personalizado');
+            return;
+        }
+        name = customName;
+    } else {
+        name = selectValue;
+    }
+    
     if (!name || !arrivalTime) {
-        alert('Por favor selecciona un jugador y la hora de llegada');
+        alert('Por favor completa el nombre y la hora de llegada');
         return;
     }
     
@@ -125,6 +151,8 @@ function addPlayer() {
     
     // Limpiar campos
     document.getElementById('player-name').value = '';
+    document.getElementById('custom-player-name').value = '';
+    document.getElementById('custom-name-group').classList.add('hidden');
     document.getElementById('arrival-time').value = new Date().toTimeString().slice(0, 5);
     
     showToast(`${name} agregado a la sesión`);
@@ -150,6 +178,151 @@ function updateProgress(step, description) {
     
     stepIndicator.textContent = `Paso ${step} de 4: ${description}`;
     progressFill.style.width = `${(step / 4) * 100}%`;
+    
+    updateBottomNav(step);
+}
+
+// Gestos de swipe para eliminar jugadores
+function initSwipeGestures() {
+    let startX = 0;
+    let currentX = 0;
+    let isDragging = false;
+    let currentItem = null;
+    
+    document.addEventListener('touchstart', (e) => {
+        const playerItem = e.target.closest('.player-item');
+        if (!playerItem) return;
+        
+        startX = e.touches[0].clientX;
+        currentItem = playerItem;
+        isDragging = true;
+        playerItem.classList.add('swiping');
+    }, { passive: true });
+    
+    document.addEventListener('touchmove', (e) => {
+        if (!isDragging || !currentItem) return;
+        
+        currentX = e.touches[0].clientX;
+        const deltaX = currentX - startX;
+        
+        // Solo permitir swipe hacia la izquierda
+        if (deltaX < 0) {
+            const swipeDistance = Math.min(Math.abs(deltaX), 100);
+            currentItem.style.setProperty('--swipe-x', `-${swipeDistance}px`);
+            
+            // Cambiar apariencia cuando pasa el umbral
+            if (swipeDistance > 50) {
+                currentItem.classList.add('swipe-delete');
+            } else {
+                currentItem.classList.remove('swipe-delete');
+            }
+        }
+    }, { passive: true });
+    
+    document.addEventListener('touchend', (e) => {
+        if (!isDragging || !currentItem) return;
+        
+        const deltaX = currentX - startX;
+        const swipeDistance = Math.abs(deltaX);
+        
+        if (deltaX < 0 && swipeDistance > 80) {
+            // Eliminar jugador
+            const playerId = parseInt(currentItem.dataset.playerId);
+            if (playerId) {
+                removePlayer(playerId);
+            }
+        } else {
+            // Volver a posición original
+            currentItem.style.setProperty('--swipe-x', '0');
+            currentItem.classList.remove('swipe-delete');
+        }
+        
+        // Limpiar estado
+        setTimeout(() => {
+            if (currentItem) {
+                currentItem.classList.remove('swiping');
+                currentItem.style.removeProperty('--swipe-x');
+            }
+        }, 300);
+        
+        isDragging = false;
+        currentItem = null;
+        startX = 0;
+        currentX = 0;
+    }, { passive: true });
+}
+
+// Inicializar gestos al cargar
+document.addEventListener('DOMContentLoaded', () => {
+    initSwipeGestures();
+});
+
+// Actualizar bottom navigation
+function updateBottomNav(currentStep) {
+    // Remover active de todos
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+        item.classList.add('disabled');
+    });
+    
+    // Activar pasos disponibles
+    for (let i = 1; i <= currentStep; i++) {
+        const navItem = document.getElementById(`nav-${getStepId(i)}`);
+        if (navItem) {
+            navItem.classList.remove('disabled');
+            if (i === currentStep) {
+                navItem.classList.add('active');
+            }
+        }
+    }
+}
+
+// Obtener ID del paso
+function getStepId(step) {
+    const stepIds = { 1: 'setup', 2: 'players', 3: 'session', 4: 'results' };
+    return stepIds[step] || 'setup';
+}
+
+// Navegar a paso específico
+function navigateToStep(step) {
+    const navItem = document.getElementById(`nav-${getStepId(step)}`);
+    if (navItem && navItem.classList.contains('disabled')) {
+        return; // No permitir navegación a pasos no disponibles
+    }
+    
+    // Ocultar todas las secciones
+    document.querySelectorAll('.section').forEach(section => {
+        section.classList.add('hidden');
+    });
+    
+    // Mostrar sección correspondiente
+    switch(step) {
+        case 1:
+            document.getElementById('session-setup').classList.remove('hidden');
+            updateProgress(1, 'Configurar sesión');
+            break;
+        case 2:
+            if (sessionData.isActive) {
+                document.getElementById('initial-players').classList.remove('hidden');
+                document.getElementById('active-players').classList.remove('hidden');
+                updateProgress(2, 'Agregar jugadores iniciales');
+            }
+            break;
+        case 3:
+            if (sessionData.players.length > 0) {
+                document.getElementById('player-management').classList.remove('hidden');
+                document.getElementById('active-players').classList.remove('hidden');
+                document.getElementById('session-end').classList.remove('hidden');
+                updateProgress(3, 'Gestionar sesión');
+            }
+            break;
+        case 4:
+            if (sessionData.totalCost > 0) {
+                document.getElementById('results').classList.remove('hidden');
+                updateProgress(4, 'Resultados finales');
+            }
+            break;
+    }
 }
 
 // Formatear números con separador de miles
@@ -253,7 +426,8 @@ function updatePlayersDisplay() {
         const colorClass = `player-color-${index % 8}`;
         
         return `
-            <div class="player-item ${statusClass} ${colorClass}">
+            <div class="player-item ${statusClass} ${colorClass}" data-player-id="${player.id}">
+                <div class="swipe-indicator">❌</div>
                 <div class="player-info">
                     <div class="player-name">${player.name}</div>
                     <div class="player-time">Llegó: ${player.arrivalTime} | ${statusText}</div>
