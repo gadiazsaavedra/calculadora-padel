@@ -25,7 +25,7 @@ function startSession() {
     const startTime = document.getElementById('start-time').value;
     
     if (!startTime) {
-        alert('Por favor ingresa la hora de inicio');
+        showAlert('Campo requerido', 'Por favor ingresa la hora de inicio');
         return;
     }
     
@@ -52,14 +52,14 @@ function addInitialPlayers() {
     const selectedPlayers = Array.from(checkboxes).map(cb => cb.value);
     
     if (selectedPlayers.length === 0) {
-        alert('Selecciona al menos un jugador');
+        showAlert('Campo requerido', 'Selecciona al menos un jugador');
         return;
     }
     
     const players = selectedPlayers.filter(name => !sessionData.players.find(p => p.name === name));
     
     if (players.length === 0) {
-        alert('Los jugadores seleccionados ya están en la sesión');
+        showAlert('Jugadores duplicados', 'Los jugadores seleccionados ya están en la sesión');
         return;
     }
     
@@ -112,7 +112,7 @@ function addPlayer() {
     let name = '';
     if (selectValue === 'custom') {
         if (!customName) {
-            alert('Por favor ingresa el nombre del jugador personalizado');
+            showAlert('Campo requerido', 'Por favor ingresa el nombre del jugador personalizado');
             return;
         }
         name = customName;
@@ -418,7 +418,7 @@ function allPlayersStay() {
         showToast(`${activePlayersCount} jugador${activePlayersCount > 1 ? 'es' : ''} marcado${activePlayersCount > 1 ? 's' : ''} para quedarse hasta el final`);
         updatePlayersDisplay();
     } else {
-        alert('No hay jugadores activos para marcar');
+        showAlert('Sin jugadores', 'No hay jugadores activos para marcar');
     }
 }
 
@@ -525,12 +525,12 @@ function endSession() {
     const totalCost = parseFloat(document.getElementById('total-cost').value);
     
     if (!endTime || !totalCost || totalCost <= 0) {
-        alert('Por favor completa la hora de fin y el costo total');
+        showAlert('Campos requeridos', 'Por favor completa la hora de fin y el costo total');
         return;
     }
     
     if (sessionData.players.length === 0) {
-        alert('No hay jugadores para calcular');
+        showAlert('Sin jugadores', 'No hay jugadores para calcular');
         return;
     }
     
@@ -562,7 +562,7 @@ function calculateCosts() {
     const totalSessionMinutes = sessionEnd - sessionStart;
     
     if (totalSessionMinutes <= 0) {
-        alert('Error: La hora de fin debe ser posterior a la hora de inicio');
+        showAlert('Error de horario', 'La hora de fin debe ser posterior a la hora de inicio');
         return;
     }
     
