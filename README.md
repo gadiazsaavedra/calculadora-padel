@@ -44,6 +44,7 @@ Una aplicación web progresiva (PWA) diseñada para calcular de forma justa y au
 - **"Todos se quedan"**: Botón para sesiones donde nadie se va temprano
 - **Confirmación visual**: Mensajes toast al agregar jugadores
 - **Colores por jugador**: 8 colores únicos para identificación rápida
+- **Historial de sesiones**: Guarda automáticamente las últimas 20 sesiones
 
 ## 🎯 Casos de Uso
 
@@ -53,6 +54,7 @@ Una aplicación web progresiva (PWA) diseñada para calcular de forma justa y au
 3. **20:15** - Se va María
 4. **21:00** - Llega Luis
 5. **22:00** - Termina la sesión, costo total $8,000
+6. **Automático** - La sesión se guarda en el historial
 
 **Resultado automático**:
 - Juan: 4h → $2,000 (25%)
@@ -61,6 +63,12 @@ Una aplicación web progresiva (PWA) diseñada para calcular de forma justa y au
 - Pedro: 2.5h → $1,300 (16.25%)
 - Luis: 1h → $500 (6.25%)
 - María: 1.25h → $200 (2.5%)
+
+### Historial de Sesiones
+- **Acceso**: Toca el ícono 📋 en la navegación inferior
+- **Ver detalles**: Revisa cálculos de sesiones anteriores
+- **Eliminar**: Borra sesiones individuales o todo el historial
+- **Almacenamiento**: Guarda las últimas 20 sesiones automáticamente
 
 ## 🛠️ Instalación y Uso
 
@@ -114,6 +122,12 @@ npx serve .
 - Ve los **montos por jugador**
 - Marca **pagos recibidos**
 - **Comparte por WhatsApp** con el grupo
+
+### 📋 Historial
+- **Acceso rápido**: Botón en navegación inferior
+- **Guardado automático**: Cada sesión finalizada se guarda
+- **Ver detalles**: Revisa sesiones anteriores
+- **Eliminar sesiones**: Limpia registros individuales o todo el historial
 
 ## 🧪 Testing
 

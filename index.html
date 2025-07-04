@@ -395,6 +395,39 @@
             font-weight: 600;
         }
         
+        /* Historial */
+        .history-item {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid #2196F3;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .history-date {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .history-summary {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        
+        .history-players {
+            font-size: 12px;
+            color: #888;
+        }
+        
+        .history-actions {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+        }
+        
         /* Bottom Navigation */
         .bottom-nav {
             position: fixed;
@@ -443,7 +476,7 @@
         
         /* Ajustar contenido para bottom nav */
         .container {
-            margin-bottom: calc(80px + env(safe-area-inset-bottom));
+            margin-bottom: calc(100px + env(safe-area-inset-bottom));
         }
         
         .toast {
@@ -631,6 +664,13 @@
                 <button onclick="shareResults()" style="margin-top: 20px; margin-right: 10px;" class="btn-secondary">📱 Compartir por WhatsApp</button>
                 <button onclick="resetApp()" style="margin-top: 20px;">Nueva Sesión</button>
             </div>
+            
+            <!-- Historial -->
+            <div class="section hidden" id="history">
+                <h3>📋 Historial de Sesiones</h3>
+                <div id="history-list"></div>
+                <button onclick="clearHistory()" class="btn-danger" style="margin-top: 15px;">🗑️ Limpiar Historial</button>
+            </div>
         </div>
         
         <div style="text-align: center; padding: 20px; color: #666; font-size: 14px; border-top: 1px solid #eee; margin-top: 20px;">
@@ -666,6 +706,10 @@
             <div class="nav-icon">📊</div>
             <div class="nav-label">Resultados</div>
         </div>
+        <div class="nav-item" onclick="showHistory()" id="nav-history">
+            <div class="nav-icon">📋</div>
+            <div class="nav-label">Historial</div>
+        </div>
     </div>
 
     <script>
@@ -694,6 +738,34 @@
                 localStorage.setItem('padelSession', JSON.stringify(sessionData));
             } catch (error) {
                 console.error('Error guardando sesión:', error);
+            }
+        }
+        
+        function saveToHistory() {
+            if (!sessionData.totalCost || sessionData.players.length === 0) return;
+            
+            try {
+                const history = JSON.parse(localStorage.getItem('padelHistory') || '[]');
+                const sessionRecord = {
+                    id: Date.now(),
+                    date: new Date().toLocaleDateString('es-ES'),
+                    startTime: sessionData.startTime,
+                    endTime: sessionData.endTime,
+                    totalCost: sessionData.totalCost,
+                    players: sessionData.players.map(p => ({
+                        name: p.name,
+                        cost: p.cost,
+                        effectiveMinutes: p.effectiveMinutes,
+                        paid: p.paid
+                    }))
+                };
+                
+                history.unshift(sessionRecord);
+                if (history.length > 20) history.pop(); // Mantener solo 20 sesiones
+                
+                localStorage.setItem('padelHistory', JSON.stringify(history));
+            } catch (error) {
+                console.error('Error guardando historial:', error);
             }
         }
         
@@ -1059,6 +1131,7 @@
             sessionData.isActive = false;
             
             calculateCosts();
+            saveToHistory();
             showResults();
             saveSession();
         }
@@ -1171,13 +1244,104 @@
         function resetApp() {
             if (confirm('¿Iniciar una nueva sesión? Se perderán los datos actuales.')) {
                 localStorage.removeItem('padelSession');
-                location.reload();
+                document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+                document.getElementById('session-setup').classList.remove('hidden');
+                updateProgress(1, 'Configurar sesión');
+                
+                sessionData = {
+                    startTime: null,
+                    endTime: null,
+                    totalCost: 0,
+                    players: [],
+                    isActive: false
+                };
+                
+                document.getElementById('start-time').value = '';
+                document.getElementById('end-time').value = '';
+                document.getElementById('total-cost').value = '';
             }
         }
         
         function navigateToStep(step) {
             // Navegación entre pasos (funcionalidad futura)
         }
+        
+        function showHistory() {
+            document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+            document.getElementById('history').classList.remove('hidden');
+            
+            const history = JSON.parse(localStorage.getItem('padelHistory') || '[]');
+            const container = document.getElementById('history-list');
+            
+            if (history.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #666;">No hay sesiones guardadas</p>';
+                return;
+            }
+            
+            container.innerHTML = history.map(session => {
+                const totalPaid = session.players.reduce((sum, p) => sum + (p.paid ? p.cost : 0), 0);
+                const playerNames = session.players.map(p => p.name).join(', ');
+                
+                return `
+                    <div class="history-item">
+                        <div class="history-date">${session.date}</div>
+                        <div class="history-summary">
+                            ${session.startTime} - ${session.endTime} | $${formatCurrency(session.totalCost)}
+                        </div>
+                        <div class="history-players">
+                            ${session.players.length} jugadores: ${playerNames}
+                        </div>
+                        <div class="history-actions">
+                            <button class="btn-small btn-secondary" onclick="viewSessionDetails(${session.id})">👁️ Ver</button>
+                            <button class="btn-small btn-danger" onclick="deleteSession(${session.id})">❌ Eliminar</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function viewSessionDetails(sessionId) {
+            const history = JSON.parse(localStorage.getItem('padelHistory') || '[]');
+            const session = history.find(s => s.id === sessionId);
+            if (!session) return;
+            
+            let details = `🏦 SESIÓN DEL ${session.date}\n\n`;
+            details += `⏰ Horario: ${session.startTime} - ${session.endTime}\n`;
+            details += `💰 Costo total: $${formatCurrency(session.totalCost)}\n\n`;
+            details += `👥 JUGADORES:\n`;
+            
+            session.players.forEach(player => {
+                const hours = (player.effectiveMinutes / 60).toFixed(1);
+                const status = player.paid ? '✅' : '⏳';
+                details += `• ${player.name}: $${formatCurrency(player.cost)} (${hours}h) ${status}\n`;
+            });
+            
+            alert(details);
+        }
+        
+        function deleteSession(sessionId) {
+            if (confirm('¿Eliminar esta sesión del historial?')) {
+                const history = JSON.parse(localStorage.getItem('padelHistory') || '[]');
+                const filtered = history.filter(s => s.id !== sessionId);
+                localStorage.setItem('padelHistory', JSON.stringify(filtered));
+                showHistory();
+            }
+        }
+        
+        function clearHistory() {
+            if (confirm('¿Eliminar todo el historial? Esta acción no se puede deshacer.')) {
+                localStorage.removeItem('padelHistory');
+                showHistory();
+            }
+        }
+        
+        // Navegación mejorada
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'h' && e.ctrlKey) {
+                e.preventDefault();
+                showHistory();
+            }
+        });
         
         // App cargada correctamente
     </script>
