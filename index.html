@@ -685,7 +685,70 @@
             const currentTime = now.toTimeString().slice(0, 5);
             document.getElementById('arrival-time').value = currentTime;
             initSwipeGestures();
+            loadSession();
         });
+        
+        // Persistencia de datos
+        function saveSession() {
+            try {
+                localStorage.setItem('padelSession', JSON.stringify(sessionData));
+            } catch (error) {
+                console.error('Error guardando sesión:', error);
+            }
+        }
+        
+        function loadSession() {
+            try {
+                const saved = localStorage.getItem('padelSession');
+                if (saved) {
+                    const data = JSON.parse(saved);
+                    // Solo cargar si hay una sesión activa
+                    if (data.isActive || data.totalCost > 0) {
+                        sessionData = data;
+                        restoreSession();
+                    }
+                }
+            } catch (error) {
+                console.error('Error cargando sesión:', error);
+            }
+        }
+        
+        function restoreSession() {
+            if (sessionData.startTime) {
+                document.getElementById('start-time').value = sessionData.startTime;
+            }
+            if (sessionData.endTime) {
+                document.getElementById('end-time').value = sessionData.endTime;
+            }
+            if (sessionData.totalCost > 0) {
+                document.getElementById('total-cost').value = sessionData.totalCost;
+            }
+            
+            // Restaurar vista según el estado
+            if (sessionData.totalCost > 0) {
+                // Mostrar resultados
+                showResults();
+            } else if (sessionData.players.length > 0) {
+                // Mostrar gestión de sesión
+                document.getElementById('session-setup').classList.add('hidden');
+                document.getElementById('initial-players').classList.add('hidden');
+                document.getElementById('player-management').classList.remove('hidden');
+                document.getElementById('session-end').classList.remove('hidden');
+                document.getElementById('active-players').classList.remove('hidden');
+                updateProgress(3, 'Gestionar sesión');
+                updatePlayersDisplay();
+            } else if (sessionData.isActive) {
+                // Mostrar selección de jugadores iniciales
+                document.getElementById('session-setup').classList.add('hidden');
+                document.getElementById('initial-players').classList.remove('hidden');
+                document.getElementById('active-players').classList.remove('hidden');
+                updateProgress(2, 'Agregar jugadores iniciales');
+            }
+            
+            if (sessionData.startTime || sessionData.players.length > 0 || sessionData.totalCost > 0) {
+                showToast('Sesión anterior restaurada');
+            }
+        }
         
         // Iniciar nueva sesión
         function startSession() {
@@ -710,6 +773,7 @@
             
             updateProgress(2, 'Agregar jugadores iniciales');
             updatePlayersDisplay();
+            saveSession();
         }
         
         // Funciones esenciales embebidas
@@ -817,6 +881,7 @@
             updateProgress(3, 'Gestionar sesión');
             showToast(`${players.length} jugador${players.length > 1 ? 'es' : ''} agregado${players.length > 1 ? 's' : ''}`);
             updatePlayersDisplay();
+            saveSession();
         }
         
         function showToast(message) {
@@ -840,6 +905,7 @@
                         player.departureTime = departureTime;
                         player.isActive = false;
                         updatePlayersDisplay();
+                        saveSession();
                     }
                 });
         }
@@ -907,6 +973,7 @@
             if (confirm('¿Eliminar este jugador de la sesión?')) {
                 sessionData.players = sessionData.players.filter(p => p.id !== playerId);
                 updatePlayersDisplay();
+                saveSession();
             }
         }
         
@@ -969,6 +1036,7 @@
             
             showToast(`${name} agregado a la sesión`);
             updatePlayersDisplay();
+            saveSession();
         }
         
         // Finalizar sesión y calcular
@@ -992,6 +1060,7 @@
             
             calculateCosts();
             showResults();
+            saveSession();
         }
         
         function calculateCosts() {
@@ -1095,11 +1164,13 @@
             if (player) {
                 player.paid = !player.paid;
                 showResults();
+                saveSession();
             }
         }
         
         function resetApp() {
             if (confirm('¿Iniciar una nueva sesión? Se perderán los datos actuales.')) {
+                localStorage.removeItem('padelSession');
                 location.reload();
             }
         }
