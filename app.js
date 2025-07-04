@@ -18,32 +18,63 @@ document.addEventListener('DOMContentLoaded', function() {
     const now = new Date();
     const currentTime = now.toTimeString().slice(0, 5);
     document.getElementById('arrival-time').value = currentTime;
+    
+    // Debug: Verificar que el botón existe
+    const startButton = document.getElementById('start-button');
+    console.log('Botón encontrado:', startButton);
+    
+    // Agregar event listener alternativo
+    if (startButton) {
+        startButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Click detectado en botón');
+            startSession();
+        });
+        
+        // Touch events para móvil
+        startButton.addEventListener('touchend', function(e) {
+            e.preventDefault();
+            console.log('Touch detectado en botón');
+            startSession();
+        });
+    }
 });
 
 // Iniciar nueva sesión
 function startSession() {
-    const startTime = document.getElementById('start-time').value;
-    
-    if (!startTime) {
-        showAlert('Campo requerido', 'Por favor ingresa la hora de inicio');
-        return;
+    console.log('startSession llamada');
+    try {
+        const startTime = document.getElementById('start-time').value;
+        console.log('Hora de inicio:', startTime);
+        
+        if (!startTime) {
+            alert('Por favor ingresa la hora de inicio');
+            return;
+        }
+        
+        sessionData = {
+            startTime: startTime,
+            endTime: null,
+            totalCost: 0,
+            players: [],
+            isActive: true
+        };
+        
+        console.log('SessionData creado:', sessionData);
+        
+        // Mostrar secciones de gestión
+        document.getElementById('session-setup').classList.add('hidden');
+        document.getElementById('initial-players').classList.remove('hidden');
+        document.getElementById('active-players').classList.remove('hidden');
+        
+        updateProgress(2, 'Agregar jugadores iniciales');
+        updatePlayersDisplay();
+        
+        console.log('Sesión iniciada correctamente');
+    } catch (error) {
+        console.error('Error en startSession:', error);
+        alert('Error al iniciar sesión: ' + error.message);
     }
-    
-    sessionData = {
-        startTime: startTime,
-        endTime: null,
-        totalCost: 0,
-        players: [],
-        isActive: true
-    };
-    
-    // Mostrar secciones de gestión
-    document.getElementById('session-setup').classList.add('hidden');
-    document.getElementById('initial-players').classList.remove('hidden');
-    document.getElementById('active-players').classList.remove('hidden');
-    
-    updateProgress(2, 'Agregar jugadores iniciales');
-    updatePlayersDisplay();
 }
 
 // Agregar jugadores iniciales

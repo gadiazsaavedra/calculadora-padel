@@ -668,6 +668,447 @@
         </div>
     </div>
 
-    <script src="app.js"></script>
+    <script>
+        // Todo el JavaScript embebido para compatibilidad móvil
+        // Estado global de la aplicación
+        let sessionData = {
+            startTime: null,
+            endTime: null,
+            totalCost: 0,
+            players: [],
+            isActive: false
+        };
+        
+        // Inicializar la aplicación
+        document.addEventListener('DOMContentLoaded', function() {
+            const now = new Date();
+            const currentTime = now.toTimeString().slice(0, 5);
+            document.getElementById('arrival-time').value = currentTime;
+            initSwipeGestures();
+        });
+        
+        // Iniciar nueva sesión
+        function startSession() {
+            const startTime = document.getElementById('start-time').value;
+            
+            if (!startTime) {
+                alert('Por favor ingresa la hora de inicio');
+                return;
+            }
+            
+            sessionData = {
+                startTime: startTime,
+                endTime: null,
+                totalCost: 0,
+                players: [],
+                isActive: true
+            };
+            
+            document.getElementById('session-setup').classList.add('hidden');
+            document.getElementById('initial-players').classList.remove('hidden');
+            document.getElementById('active-players').classList.remove('hidden');
+            
+            updateProgress(2, 'Agregar jugadores iniciales');
+            updatePlayersDisplay();
+        }
+        
+        // Funciones esenciales embebidas
+        function updateProgress(step, description) {
+            const stepIndicator = document.getElementById('step-indicator');
+            const progressFill = document.getElementById('progress-fill');
+            
+            stepIndicator.textContent = `Paso ${step} de 4: ${description}`;
+            progressFill.style.width = `${(step / 4) * 100}%`;
+            
+            updateBottomNav(step);
+        }
+        
+        function updateBottomNav(currentStep) {
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+                item.classList.add('disabled');
+            });
+            
+            for (let i = 1; i <= currentStep; i++) {
+                const stepIds = { 1: 'setup', 2: 'players', 3: 'session', 4: 'results' };
+                const navItem = document.getElementById(`nav-${stepIds[i]}`);
+                if (navItem) {
+                    navItem.classList.remove('disabled');
+                    if (i === currentStep) {
+                        navItem.classList.add('active');
+                    }
+                }
+            }
+        }
+        
+        function updatePlayersDisplay() {
+            const container = document.getElementById('players-list');
+            
+            if (sessionData.players.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #666;">No hay jugadores en la sesión</p>';
+                return;
+            }
+            
+            container.innerHTML = sessionData.players.map((player, index) => {
+                const statusClass = player.isActive ? 'status-active' : 'status-left';
+                const statusText = player.isActive ? 'En juego' : `Salió: ${player.departureTime}`;
+                const colorClass = `player-color-${index % 8}`;
+                
+                return `
+                    <div class="player-item ${statusClass} ${colorClass}" data-player-id="${player.id}">
+                        <div class="swipe-indicator">❌</div>
+                        <div class="player-info">
+                            <div class="player-name">${player.name}</div>
+                            <div class="player-time">Llegó: ${player.arrivalTime} | ${statusText}</div>
+                        </div>
+                        <div>
+                            ${player.isActive ? 
+                                `<button class="btn-small" onclick="markPlayerDeparture(${player.id})">🚪 Marcar Salida</button>` : 
+                                ''
+                            }
+                            <button class="btn-small btn-danger" onclick="removePlayer(${player.id})">❌ Eliminar</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function initSwipeGestures() {
+            // Swipe gestures básicos para futuras mejoras
+        }
+        
+        // Agregar jugadores iniciales
+        function addInitialPlayers() {
+            const checkboxes = document.querySelectorAll('#initial-players input[type="checkbox"]:checked');
+            const selectedPlayers = Array.from(checkboxes).map(cb => cb.value);
+            
+            if (selectedPlayers.length === 0) {
+                alert('Selecciona al menos un jugador marcando las casillas');
+                return;
+            }
+            
+            const players = selectedPlayers.filter(name => !sessionData.players.find(p => p.name === name));
+            
+            if (players.length === 0) {
+                alert('Los jugadores seleccionados ya están en la sesión');
+                return;
+            }
+            
+            players.forEach(name => {
+                const player = {
+                    id: Date.now() + Math.random(),
+                    name: name,
+                    arrivalTime: sessionData.startTime,
+                    departureTime: null,
+                    isActive: true,
+                    paid: false
+                };
+                sessionData.players.push(player);
+            });
+            
+            // Limpiar selecciones
+            document.querySelectorAll('#initial-players input[type="checkbox"]').forEach(cb => cb.checked = false);
+            
+            // Mostrar secciones restantes
+            document.getElementById('initial-players').classList.add('hidden');
+            document.getElementById('player-management').classList.remove('hidden');
+            document.getElementById('session-end').classList.remove('hidden');
+            
+            updateProgress(3, 'Gestionar sesión');
+            showToast(`${players.length} jugador${players.length > 1 ? 'es' : ''} agregado${players.length > 1 ? 's' : ''}`);
+            updatePlayersDisplay();
+        }
+        
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+        
+        function markPlayerDeparture(playerId) {
+            showTimeModal('Hora de salida', 'Selecciona la hora de salida:', new Date().toTimeString().slice(0, 5))
+                .then(departureTime => {
+                    if (!departureTime) return;
+                    
+                    const player = sessionData.players.find(p => p.id === playerId);
+                    if (player) {
+                        player.departureTime = departureTime;
+                        player.isActive = false;
+                        updatePlayersDisplay();
+                    }
+                });
+        }
+        
+        // Modal con input de tiempo nativo
+        function showTimeModal(title, message, defaultValue = '') {
+            return new Promise((resolve) => {
+                const overlay = document.getElementById('modal-overlay');
+                const titleEl = document.getElementById('modal-title');
+                const messageEl = document.getElementById('modal-message');
+                const inputEl = document.getElementById('modal-input');
+                const buttonsEl = document.getElementById('modal-buttons');
+                
+                titleEl.textContent = title;
+                messageEl.textContent = message;
+                inputEl.classList.remove('hidden');
+                inputEl.type = 'time';
+                inputEl.value = defaultValue;
+                inputEl.placeholder = '';
+                
+                buttonsEl.innerHTML = `
+                    <button class="modal-button secondary" onclick="closeModal(); window.modalResolve(null);">Cancelar</button>
+                    <button class="modal-button primary" onclick="closeModal(); window.modalResolve(document.getElementById('modal-input').value);">OK</button>
+                `;
+                
+                overlay.classList.add('show');
+                setTimeout(() => inputEl.focus(), 300);
+                window.modalResolve = resolve;
+            });
+        }
+        
+        function closeModal() {
+            const overlay = document.getElementById('modal-overlay');
+            overlay.classList.remove('show');
+        }
+        
+        // Compartir resultados por WhatsApp
+        function shareResults() {
+            const today = new Date().toLocaleDateString('es-ES');
+            const totalCalculated = sessionData.players.reduce((sum, p) => sum + p.cost, 0);
+            const totalPaid = sessionData.players.reduce((sum, p) => sum + (p.paid ? p.cost : 0), 0);
+            const saldo = totalCalculated - sessionData.totalCost;
+            
+            let message = `🎾 RESULTADOS PÁDEL - ${today}\n\n`;
+            message += `💰 Costo total: $${formatCurrency(sessionData.totalCost)}\n`;
+            message += `⏰ Sesión: ${sessionData.startTime} - ${sessionData.endTime}\n\n`;
+            message += `👥 PAGOS POR JUGADOR:\n`;
+            
+            sessionData.players.forEach(player => {
+                const status = player.paid ? '✅ Pagado' : '⏳ Pendiente';
+                const hours = (player.effectiveMinutes / 60).toFixed(1);
+                message += `• ${player.name}: $${formatCurrency(player.cost)} (${hours}h) ${status}\n`;
+            });
+            
+            message += `\n📄 RESUMEN:\n`;
+            message += `Recaudado: $${formatCurrency(totalPaid)}\n`;
+            message += `Pendiente: $${formatCurrency(totalCalculated - totalPaid)}\n`;
+            message += `Saldo: ${saldo >= 0 ? '+' : ''}$${formatCurrency(Math.abs(saldo))}`;
+            
+            const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+            window.open(whatsappUrl, '_blank');
+        }
+        
+        function removePlayer(playerId) {
+            if (confirm('¿Eliminar este jugador de la sesión?')) {
+                sessionData.players = sessionData.players.filter(p => p.id !== playerId);
+                updatePlayersDisplay();
+            }
+        }
+        
+        // Mostrar/ocultar campo de nombre personalizado
+        function toggleCustomName() {
+            const select = document.getElementById('player-name');
+            const customGroup = document.getElementById('custom-name-group');
+            
+            if (select.value === 'custom') {
+                customGroup.classList.remove('hidden');
+            } else {
+                customGroup.classList.add('hidden');
+                document.getElementById('custom-player-name').value = '';
+            }
+        }
+        
+        // Agregar jugador individual
+        function addPlayer() {
+            const selectValue = document.getElementById('player-name').value;
+            const customName = document.getElementById('custom-player-name').value.trim();
+            const arrivalTime = document.getElementById('arrival-time').value;
+            
+            let name = '';
+            if (selectValue === 'custom') {
+                if (!customName) {
+                    alert('Por favor ingresa el nombre del jugador personalizado');
+                    return;
+                }
+                name = customName;
+            } else {
+                name = selectValue;
+            }
+            
+            if (!name || !arrivalTime) {
+                alert('Por favor completa el nombre y la hora de llegada');
+                return;
+            }
+            
+            if (sessionData.players.find(p => p.name === name)) {
+                alert('Este jugador ya está en la sesión');
+                return;
+            }
+            
+            const player = {
+                id: Date.now(),
+                name: name,
+                arrivalTime: arrivalTime,
+                departureTime: null,
+                isActive: true,
+                paid: false
+            };
+            
+            sessionData.players.push(player);
+            
+            // Limpiar campos
+            document.getElementById('player-name').value = '';
+            document.getElementById('custom-player-name').value = '';
+            document.getElementById('custom-name-group').classList.add('hidden');
+            document.getElementById('arrival-time').value = new Date().toTimeString().slice(0, 5);
+            
+            showToast(`${name} agregado a la sesión`);
+            updatePlayersDisplay();
+        }
+        
+        // Finalizar sesión y calcular
+        function endSession() {
+            const endTime = document.getElementById('end-time').value;
+            const totalCost = parseFloat(document.getElementById('total-cost').value);
+            
+            if (!endTime || !totalCost || totalCost <= 0) {
+                alert('Por favor completa la hora de fin y el costo total');
+                return;
+            }
+            
+            if (sessionData.players.length === 0) {
+                alert('No hay jugadores para calcular');
+                return;
+            }
+            
+            sessionData.endTime = endTime;
+            sessionData.totalCost = totalCost;
+            sessionData.isActive = false;
+            
+            calculateCosts();
+            showResults();
+        }
+        
+        function calculateCosts() {
+            const sessionStart = timeToMinutes(sessionData.startTime);
+            const sessionEnd = timeToMinutes(sessionData.endTime);
+            let totalPlayerMinutes = 0;
+            
+            sessionData.players.forEach(player => {
+                const playerStart = timeToMinutes(player.arrivalTime);
+                const playerEnd = player.departureTime ? 
+                    timeToMinutes(player.departureTime) : 
+                    sessionEnd;
+                
+                const playerMinutes = Math.max(0, playerEnd - playerStart);
+                player.effectiveMinutes = playerMinutes;
+                totalPlayerMinutes += playerMinutes;
+            });
+            
+            sessionData.players.forEach(player => {
+                const playerProportion = player.effectiveMinutes / totalPlayerMinutes;
+                const playerCost = sessionData.totalCost * playerProportion;
+                player.cost = Math.round(playerCost / 100) * 100;
+                player.proportion = playerProportion;
+            });
+        }
+        
+        function timeToMinutes(timeStr) {
+            const [hours, minutes] = timeStr.split(':').map(Number);
+            return hours * 60 + (minutes || 0);
+        }
+        
+        function minutesToTime(minutes) {
+            const hours = Math.floor(minutes / 60);
+            const mins = minutes % 60;
+            return `${hours}h ${mins}m`;
+        }
+        
+        function formatCurrency(amount) {
+            return amount.toLocaleString('es-AR');
+        }
+        
+        function showResults() {
+            document.getElementById('player-management').classList.add('hidden');
+            document.getElementById('session-end').classList.add('hidden');
+            document.getElementById('results').classList.remove('hidden');
+            
+            document.getElementById('total-display').textContent = `Costo Total: $${formatCurrency(sessionData.totalCost)}`;
+            updateProgress(4, 'Resultados finales');
+            
+            const resultsContainer = document.getElementById('results-list');
+            const totalCalculated = sessionData.players.reduce((sum, p) => sum + p.cost, 0);
+            
+            resultsContainer.innerHTML = `
+                ${sessionData.players.map((player, index) => {
+                    const colorClass = `player-color-${index % 8}`;
+                    return `
+                    <div class="player-item ${colorClass}">
+                        <div class="player-info">
+                            <div class="player-name">
+                                ${player.name}
+                                <span class="payment-status ${player.paid ? 'paid' : 'pending'}">
+                                    ${player.paid ? 'Pagado' : 'Pendiente'}
+                                </span>
+                            </div>
+                            <div class="player-time">
+                                T: ${minutesToTime(player.effectiveMinutes)}<br>
+                                (${(player.proportion * 100).toFixed(1)}%)
+                            </div>
+                        </div>
+                        <div class="player-cost">$${formatCurrency(player.cost)}</div>
+                        <button class="btn-small ${player.paid ? 'btn-danger' : 'btn-secondary'}" 
+                                onclick="togglePayment(${player.id})">
+                            ${player.paid ? '❌ Marcar Impago' : '✅ Marcar Pagado'}
+                        </button>
+                    </div>
+                `}).join('')}
+                
+                <div style="margin-top: 20px; padding: 15px; background: #f0f0f0; border-radius: 8px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <span><strong>Total a Cobrar:</strong></span>
+                        <span style="color: #2196F3;"><strong>$${formatCurrency(sessionData.totalCost)}</strong></span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <span><strong>Total Calculado:</strong></span>
+                        <span style="color: #333;"><strong>$${formatCurrency(totalCalculated)}</strong></span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <span><strong>Total Recaudado:</strong></span>
+                        <span style="color: #4CAF50;"><strong>$${formatCurrency(sessionData.players.reduce((sum, p) => sum + (p.paid ? p.cost : 0), 0))}</strong></span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span><strong>Saldo:</strong></span>
+                        <span style="color: ${totalCalculated - sessionData.totalCost >= 0 ? '#4CAF50' : '#f44336'};"><strong>${totalCalculated - sessionData.totalCost >= 0 ? '+' : ''}$${formatCurrency(Math.abs(totalCalculated - sessionData.totalCost))}</strong></span>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function togglePayment(playerId) {
+            const player = sessionData.players.find(p => p.id === playerId);
+            if (player) {
+                player.paid = !player.paid;
+                showResults();
+            }
+        }
+        
+        function resetApp() {
+            if (confirm('¿Iniciar una nueva sesión? Se perderán los datos actuales.')) {
+                location.reload();
+            }
+        }
+        
+        function navigateToStep(step) {
+            // Navegación entre pasos (funcionalidad futura)
+        }
+        
+        // App cargada correctamente
+    </script>
 </body>
 </html>
