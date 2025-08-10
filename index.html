@@ -601,6 +601,8 @@
                         <label class="checkbox-item"><input type="checkbox" value="Hugo"> Hugo</label>
                         <label class="checkbox-item"><input type="checkbox" value="Mariano"> Mariano</label>
                         <label class="checkbox-item"><input type="checkbox" value="Yel"> Yel</label>
+                        <label class="checkbox-item"><input type="checkbox" value="GuestPlayer1"> GuestPlayer 1 (+$1000)</label>
+                        <label class="checkbox-item"><input type="checkbox" value="GuestPlayer2"> GuestPlayer 2 (+$1000)</label>
                     </div>
                 </div>
                 <button onclick="addInitialPlayers()" class="btn-secondary">👥 Agregar Jugadores Iniciales</button>
@@ -621,6 +623,8 @@
                         <option value="Hugo">Hugo</option>
                         <option value="Mariano">Mariano</option>
                         <option value="Yel">Yel</option>
+                        <option value="GuestPlayer1">GuestPlayer 1 (+$1000)</option>
+                        <option value="GuestPlayer2">GuestPlayer 2 (+$1000)</option>
                         <option value="custom">Otro jugador...</option>
                     </select>
                 </div>
@@ -756,7 +760,8 @@
                         name: p.name,
                         cost: p.cost,
                         effectiveMinutes: p.effectiveMinutes,
-                        paid: p.paid
+                        paid: p.paid,
+                        isGuest: p.isGuest
                     }))
                 };
                 
@@ -937,7 +942,8 @@
                     arrivalTime: sessionData.startTime,
                     departureTime: null,
                     isActive: true,
-                    paid: false
+                    paid: false,
+                    isGuest: name === 'GuestPlayer1' || name === 'GuestPlayer2'
                 };
                 sessionData.players.push(player);
             });
@@ -1029,7 +1035,8 @@
             sessionData.players.forEach(player => {
                 const status = player.paid ? '✅ Pagado' : '⏳ Pendiente';
                 const hours = (player.effectiveMinutes / 60).toFixed(1);
-                message += `• ${player.name}: $${formatCurrency(player.cost)} (${hours}h) ${status}\n`;
+                const guestNote = player.isGuest ? ' +$1000' : '';
+                message += `• ${player.name}: $${formatCurrency(player.cost)} (${hours}h${guestNote}) ${status}\n`;
             });
             
             message += `\n📄 RESUMEN:\n`;
@@ -1095,7 +1102,8 @@
                 arrivalTime: arrivalTime,
                 departureTime: null,
                 isActive: true,
-                paid: false
+                paid: false,
+                isGuest: name === 'GuestPlayer1' || name === 'GuestPlayer2'
             };
             
             sessionData.players.push(player);
@@ -1155,7 +1163,8 @@
             sessionData.players.forEach(player => {
                 const playerProportion = player.effectiveMinutes / totalPlayerMinutes;
                 const playerCost = sessionData.totalCost * playerProportion;
-                player.cost = Math.round(playerCost / 100) * 100;
+                const baseCost = Math.round(playerCost / 100) * 100;
+                player.cost = player.isGuest ? baseCost + 1000 : baseCost;
                 player.proportion = playerProportion;
             });
         }
@@ -1200,7 +1209,7 @@
                             </div>
                             <div class="player-time">
                                 T: ${minutesToTime(player.effectiveMinutes)}<br>
-                                (${(player.proportion * 100).toFixed(1)}%)
+                                (${(player.proportion * 100).toFixed(1)}%)${player.isGuest ? ' + $1000 recargo' : ''}
                             </div>
                         </div>
                         <div class="player-cost">$${formatCurrency(player.cost)}</div>
@@ -1313,7 +1322,8 @@
             session.players.forEach(player => {
                 const hours = (player.effectiveMinutes / 60).toFixed(1);
                 const status = player.paid ? '✅' : '⏳';
-                details += `• ${player.name}: $${formatCurrency(player.cost)} (${hours}h) ${status}\n`;
+                const guestNote = player.isGuest ? ' +$1000' : '';
+                details += `• ${player.name}: $${formatCurrency(player.cost)} (${hours}h${guestNote}) ${status}\n`;
             });
             
             alert(details);

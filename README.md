@@ -45,11 +45,12 @@ Una aplicación web progresiva (PWA) diseñada para calcular de forma justa y au
 - **Confirmación visual**: Mensajes toast al agregar jugadores
 - **Colores por jugador**: 8 colores únicos para identificación rápida
 - **Historial de sesiones**: Guarda automáticamente las últimas 20 sesiones
+- **Guest Players**: GuestPlayer 1 y 2 con recargo automático de $1000 c/u
 
 ## 🎯 Casos de Uso
 
 ### Escenario Típico
-1. **18:00** - Inician Juan, María, Carlos, Ana
+1. **18:00** - Inician Juan, María, Carlos, GuestPlayer1
 2. **19:30** - Llega Pedro
 3. **20:15** - Se va María
 4. **21:00** - Llega Luis
@@ -59,10 +60,16 @@ Una aplicación web progresiva (PWA) diseñada para calcular de forma justa y au
 **Resultado automático**:
 - Juan: 4h → $2,000 (25%)
 - Carlos: 4h → $2,000 (25%)  
-- Ana: 4h → $2,000 (25%)
+- GuestPlayer1: 4h → $3,000 (25% + $1000 recargo)
 - Pedro: 2.5h → $1,300 (16.25%)
 - Luis: 1h → $500 (6.25%)
 - María: 1.25h → $200 (2.5%)
+
+### Guest Players
+- **GuestPlayer 1 y 2**: Jugadores especiales con recargo fijo
+- **Recargo automático**: +$1000 adicional a su costo proporcional
+- **Identificación visual**: Se muestra el recargo en resultados y WhatsApp
+- **Historial**: El recargo se guarda y muestra en sesiones anteriores
 
 ### Historial de Sesiones
 - **Acceso**: Toca el ícono 📋 en la navegación inferior
