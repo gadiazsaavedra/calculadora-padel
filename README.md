@@ -4,7 +4,7 @@ Una aplicación web progresiva (PWA) diseñada para calcular de forma justa y au
 
 ## 🚀 Demo en Vivo
 
-[Ver Demo](https://tu-usuario.github.io/calculadora-padel) *(Actualizar con tu URL)*
+[Ver Demo](https://gadiazsaavedra.github.io/calculadora-padel)
 
 ## 📱 Características Principales
 
@@ -82,7 +82,7 @@ Una aplicación web progresiva (PWA) diseñada para calcular de forma justa y au
 ### Opción 1: Usar Directamente
 ```bash
 # Clonar repositorio
-git clone https://github.com/tu-usuario/calculadora-padel.git
+git clone https://github.com/gadiazsaavedra/calculadora-padel.git
 cd calculadora-padel
 
 # Abrir en navegador
