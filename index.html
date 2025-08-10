@@ -673,6 +673,7 @@
             <div class="section hidden" id="history">
                 <h3>📋 Historial de Sesiones</h3>
                 <div id="history-list"></div>
+                <button onclick="goBackFromHistory()" class="btn-secondary" style="margin-top: 15px; margin-right: 10px;">← Volver</button>
                 <button onclick="clearHistory()" class="btn-danger" style="margin-top: 15px;">🗑️ Limpiar Historial</button>
             </div>
         </div>
@@ -1342,6 +1343,27 @@
             if (confirm('¿Eliminar todo el historial? Esta acción no se puede deshacer.')) {
                 localStorage.removeItem('padelHistory');
                 showHistory();
+            }
+        }
+        
+        function goBackFromHistory() {
+            document.getElementById('history').classList.add('hidden');
+            
+            if (sessionData.totalCost > 0) {
+                document.getElementById('results').classList.remove('hidden');
+                updateProgress(4, 'Resultados finales');
+            } else if (sessionData.players.length > 0) {
+                document.getElementById('player-management').classList.remove('hidden');
+                document.getElementById('active-players').classList.remove('hidden');
+                document.getElementById('session-end').classList.remove('hidden');
+                updateProgress(3, 'Gestionar sesión');
+            } else if (sessionData.isActive) {
+                document.getElementById('initial-players').classList.remove('hidden');
+                document.getElementById('active-players').classList.remove('hidden');
+                updateProgress(2, 'Agregar jugadores iniciales');
+            } else {
+                document.getElementById('session-setup').classList.remove('hidden');
+                updateProgress(1, 'Configurar sesión');
             }
         }
         
