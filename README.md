@@ -100,10 +100,49 @@ npx serve .
 # Abrir: http://localhost:8000
 ```
 
-### Opción 3: Instalar como App en Android
-1. Abre la URL en Chrome en tu Android
-2. Menú (⋮) → "Agregar a pantalla de inicio"
-3. ¡Listo! Se instala como app nativa
+### 📱 Instalar como App en tu Celular
+
+#### 🤖 **ANDROID** (Recomendado: Chrome)
+1. **Abre Chrome** en tu Android
+2. **Ve a**: https://gadiazsaavedra.github.io/calculadora-padel
+3. **Espera** que cargue completamente
+4. **Menú** (⋮) → **"Instalar app"** o **"Agregar a pantalla de inicio"**
+5. **Instalar** → ¡Listo! 🎾
+
+**Alternativas Android:**
+- **Firefox**: Menú → "Instalar"
+- **Edge**: Menú → "Agregar a inicio"
+- **Samsung Internet**: Menú → "Agregar página a"
+
+#### 🍎 **iOS** (iPhone/iPad)
+
+**Método 1: Chrome iOS (Más Confiable)**
+1. **Instala Chrome** desde App Store (si no lo tienes)
+2. **Abre Chrome** en tu iPhone
+3. **Ve a**: https://gadiazsaavedra.github.io/calculadora-padel
+4. **Espera** que cargue completamente
+5. **Menú** (⋮) → **"Agregar a pantalla de inicio"**
+6. **Agregar** → ¡Instalada! 🎾
+
+**Método 2: Safari iOS**
+1. **Abre Safari** en tu iPhone
+2. **Ve a**: https://gadiazsaavedra.github.io/calculadora-padel
+3. **Espera** que cargue completamente (muy importante)
+4. **Botón Compartir** (📤) → **"Agregar a inicio"**
+5. **Cambiar nombre** si quieres → **"Agregar"
+
+**Si Safari da error 404:**
+1. **Configuración** → **Safari** → **"Limpiar historial y datos"**
+2. **Cierra Safari** completamente
+3. **Abre Safari** nuevamente
+4. **Repite los pasos** anteriores
+
+#### ✨ **¿Qué obtienes al instalarla?**
+- 🎾 **Ícono en tu pantalla** como cualquier app
+- 🚀 **Abre sin navegador** (pantalla completa)
+- 💾 **Funciona offline** una vez cargada
+- 📱 **Experiencia nativa** optimizada para móvil
+- 🔄 **Actualizaciones automáticas** cuando actualice GitHub
 
 ## 📖 Guía de Uso
 
@@ -173,10 +212,22 @@ Modifica los colores en `index.html`:
 
 ## 📱 Compatibilidad
 
-- ✅ **Android**: Chrome, Firefox, Edge
-- ✅ **iOS**: Safari, Chrome
+- ✅ **Android**: Chrome (recomendado), Firefox, Edge, Samsung Internet
+- ✅ **iOS**: Chrome iOS (recomendado), Safari
 - ✅ **Desktop**: Todos los navegadores modernos
-- ✅ **Offline**: Funciona sin internet una vez cargada
+- ✅ **Offline**: Funciona sin internet una vez instalada
+
+### 🔧 **Solución de Problemas**
+
+**Si no aparece "Instalar app" en Android:**
+- Asegúrate de usar Chrome actualizado
+- Espera que la página cargue completamente
+- Refresca la página (F5)
+
+**Si da error 404 en iOS:**
+- Usa Chrome iOS en lugar de Safari
+- Limpia caché de Safari: Configuración → Safari → Limpiar historial
+- Asegúrate que la URL sea exacta: https://gadiazsaavedra.github.io/calculadora-padel
 
 ## 🤝 Contribuir
 
